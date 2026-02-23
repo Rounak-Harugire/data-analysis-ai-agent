@@ -11,33 +11,33 @@ and hosted it live on Railway with a public domain.
 
 
 I started with the goal of building a Data Analysis AI Agent that can:
-Accept dataset upload (CSV/XLSX)
-Analyze data automatically
-Generate insights
-Work like a ChatGPT-style assistant
-Run with a clean Streamlit UI
+Accept dataset upload (CSV/XLSX),
+Analyze data automatically,
+Generate insights,
+Work like a ChatGPT-style assistant,
+Run with a clean Streamlit UI.
 
 🔹 2️⃣ Backend AI Agent Setup
 
 
 
 I built an AI Agent system using:
-LLM integration (via API key)
-Task-based agent architecture
-Data analysis logic
-Prompt engineering
+LLM integration (via API key),
+Task-based agent architecture,
+Data analysis logic,
+Prompt engineering.
 
 🔹Error handling
 
 
 
 I faced and solved:
-OpenAI embedding errors
-API key issues
-LiteLLM dependency problems
-Rate limit errors (429 TPM issue)
-CrewAI task validation errors
-Memory configuration bugs
+OpenAI embedding errors,
+API key issues,
+LiteLLM dependency problems,
+Rate limit errors (429 TPM issue),
+CrewAI task validation errors,
+Memory configuration bugs,
 This improved system stability and production readiness.
 
 🔹 3️⃣ Streamlit Frontend Development
@@ -45,41 +45,41 @@ This improved system stability and production readiness.
 
 
 I create a ChatGPT-style UI using Streamlit:
-File uploader for dataset
-Chat interface
-Session state handling
-Response rendering
+File uploader for dataset,
+Chat interface,
+Session state handling,
+Response rendering,
 Authentication logic (initially hardcoded login)
 
 🔹Later I improved it by:
 
 
-Removing hardcoded login system
+Removing hardcoded login system,
 Making the app accessible publicly
 
 🔹 4️⃣ Git & Version Control
 
 
 
-I:
-Initialized Git repository
-Connected project to GitHub
-Learned git add, commit, push, pull
-Handled rebase conflicts
-Followed proper deployment workflow
+I
+Initialized Git repository,
+Connected project to GitHub,
+Learned git add, commit, push, pull,
+Handled rebase conflicts,
+Followed proper deployment workflow,
 This gave real-world DevOps understanding.
 
 🔹 5️⃣ Cloud Deployment (Railway)
 
 
 
-I:
-Connected GitHub to Railway
-Configured environment variables
-Fixed deployment errors (ASGI issue)
-Corrected start command
-Generated public domain
-Verified auto-redeploy process
+I
+Connected GitHub to Railway,
+Configured environment variables,
+Fixed deployment errors (ASGI issue),
+Corrected start command,
+Generated public domain,
+Verified auto-redeploy process.
 
 Final result:
 
@@ -93,18 +93,22 @@ Final result:
 
 
 
-I tested:
-Desktop browser
+I tested
+Desktop browser,
 Mobile browser
 
 🔹Identified:
 
 
 
-Mobile file picker limitations
+Mobile file picker limitations,
+
+
 Understood:
-Browser-based upload behavior
-Deployment caching issues
+
+
+Browser-based upload behavior,
+Deployment caching issues.
 
 🔹 7️⃣ Final Outcome
 
