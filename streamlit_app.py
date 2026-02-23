@@ -20,524 +20,645 @@ st.set_page_config(
 # ─────────────────────────────────────────────────────────────
 if "page" not in st.session_state:
     st.session_state.page = "landing"
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
 
 # ─────────────────────────────────────────────────────────────
-# AUTH
-# ─────────────────────────────────────────────────────────────
-def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
-
-DEMO_USER = "admin"
-DEMO_PASS = hash_password("1234")
-
-# ─────────────────────────────────────────────────────────────
-# GLOBAL CSS
+# GLOBAL CSS  — Obsidian Luxury Dark
+# Fonts: Syne (display) + DM Sans (body) + DM Mono (code/labels)
+# Palette: Deep obsidian bg · Amber gold accent · Teal secondary
 # ─────────────────────────────────────────────────────────────
 GLOBAL_CSS = """
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
-
-/* ── Tokens ── */
+/* ══════════════════════════════════════════════
+   TOKENS
+══════════════════════════════════════════════ */
 :root {
-  --bg:      #0a0f1e;
-  --bg2:     #0f1629;
-  --bg3:     #131d35;
-  --surface: rgba(255,255,255,0.05);
-  --border:  rgba(255,255,255,0.09);
-  --border2: rgba(255,255,255,0.16);
-  --blue:    #3b82f6;
-  --green:   #10b981;
-  --purple:  #8b5cf6;
-  --orange:  #f59e0b;
-  --text:    #f1f5f9;
-  --text2:   #cbd5e1;
-  --text3:   #94a3b8;
-  --text4:   #64748b;
-  --font:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --mono:    'JetBrains Mono', monospace;
+  /* Backgrounds */
+  --bg0: #06080f;
+  --bg1: #090d18;
+  --bg2: #0d1220;
+  --bg3: #111828;
+  --bg4: #161f33;
+
+  /* Borders */
+  --b1: rgba(255,255,255,0.06);
+  --b2: rgba(255,255,255,0.10);
+  --b3: rgba(255,255,255,0.18);
+
+  /* Accent — amber gold */
+  --gold:    #f5a623;
+  --gold-d:  #d4861a;
+  --gold-l:  #fbbf5c;
+  --gold-glow: rgba(245,166,35,0.18);
+
+  /* Secondary — cool teal */
+  --teal:    #14b8a6;
+  --teal-d:  #0d9488;
+  --teal-l:  #5eead4;
+
+  /* Tertiary — soft violet */
+  --violet:  #818cf8;
+  --rose:    #fb7185;
+
+  /* Text */
+  --t1: #f0f4ff;
+  --t2: #c8d0e8;
+  --t3: #8892b0;
+  --t4: #4e5a78;
+
+  /* Typography */
+  --ff-display: 'Syne', system-ui, sans-serif;
+  --ff-body:    'DM Sans', system-ui, sans-serif;
+  --ff-mono:    'DM Mono', monospace;
+
+  /* Radii */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 32px;
 }
 
-/* ── Reset Streamlit shell ── */
+/* ══════════════════════════════════════════════
+   STREAMLIT SHELL RESET
+══════════════════════════════════════════════ */
 html, body,
 [data-testid="stAppViewContainer"],
 [data-testid="stApp"] {
-  background: var(--bg) !important;
-  color: var(--text) !important;
-  font-family: var(--font) !important;
+  background: var(--bg0) !important;
+  color: var(--t1) !important;
+  font-family: var(--ff-body) !important;
 }
 [data-testid="stHeader"],
 [data-testid="stToolbar"],
-[data-testid="stDecoration"] { display: none !important; }
-[data-testid="stSidebar"]    { display: none !important; }
-#MainMenu, footer            { visibility: hidden !important; }
+[data-testid="stDecoration"],
+[data-testid="stStatusWidget"] { display: none !important; }
+[data-testid="stSidebar"]      { display: none !important; }
+#MainMenu, footer              { visibility: hidden !important; }
 [data-testid="stAppViewContainer"] > .main > .block-container {
   padding: 0 !important;
   max-width: 100% !important;
 }
+.main .block-container { padding-top: 0 !important; }
 
 /* ── Scrollbar ── */
-::-webkit-scrollbar             { width: 5px; }
-::-webkit-scrollbar-track       { background: var(--bg); }
-::-webkit-scrollbar-thumb       { background: rgba(59,130,246,0.4); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--blue); }
+::-webkit-scrollbar              { width: 3px; }
+::-webkit-scrollbar-track        { background: var(--bg0); }
+::-webkit-scrollbar-thumb        { background: var(--gold-d); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover  { background: var(--gold); }
 
-/* ── Pulsing live dot ── */
-@keyframes blink {
-  0%,100% { opacity:1; box-shadow:0 0 0 0 rgba(16,185,129,0.5); }
-  50%     { opacity:0.6; box-shadow:0 0 0 5px rgba(16,185,129,0); }
+/* ══════════════════════════════════════════════
+   KEYFRAMES
+══════════════════════════════════════════════ */
+@keyframes pulse-live {
+  0%,100% { box-shadow: 0 0 0 0 rgba(20,184,166,0.6); opacity: 1; }
+  50%     { box-shadow: 0 0 0 5px rgba(20,184,166,0); opacity: 0.7; }
+}
+@keyframes gold-shimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+@keyframes fade-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes glow-pulse {
+  0%,100% { box-shadow: 0 0 20px rgba(245,166,35,0.12); }
+  50%     { box-shadow: 0 0 36px rgba(245,166,35,0.28); }
 }
 
-/* ══════════════════════════════
-   NAVBAR
-══════════════════════════════ */
-.da-nav {
-  position: sticky; top: 0; z-index: 500;
-  height: 64px; padding: 0 40px;
+/* ══════════════════════════════════════════════
+   TOPBAR / NAVBAR
+══════════════════════════════════════════════ */
+.topbar {
+  position: sticky; top: 0; z-index: 999;
+  height: 62px; padding: 0 40px;
   display: flex; align-items: center; justify-content: space-between;
-  background: rgba(10,15,30,0.94);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
+  background: rgba(6,8,15,0.92);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border-bottom: 1px solid var(--b2);
 }
-.da-logo {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 16px; font-weight: 700; color: var(--text);
-  letter-spacing: -0.3px;
+.topbar-brand {
+  display: flex; align-items: center; gap: 11px;
+  font-family: var(--ff-display);
+  font-size: 15px; font-weight: 700;
+  color: var(--t1); letter-spacing: -0.2px;
 }
-.da-logo-box {
-  width: 30px; height: 30px;
-  background: linear-gradient(135deg, var(--blue), var(--purple));
-  border-radius: 7px;
+.topbar-logo {
+  width: 33px; height: 33px; border-radius: var(--r-xs);
+  background: linear-gradient(135deg, var(--gold), #e67c0a);
   display: flex; align-items: center; justify-content: center;
-  font-size: 15px; line-height: 1;
+  font-size: 16px; flex-shrink: 0;
+  box-shadow: 0 0 18px rgba(245,166,35,0.30);
 }
-.da-live-dot {
-  width: 7px; height: 7px;
-  background: var(--green);
-  border-radius: 50%;
-  animation: blink 2s ease-in-out infinite;
+.topbar-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--teal);
+  animation: pulse-live 2s ease-in-out infinite;
   flex-shrink: 0;
 }
-.da-nav-pill {
-  font-size: 11px; font-weight: 600; padding: 4px 12px;
-  border-radius: 20px; background: rgba(59,130,246,0.10);
-  color: #93c5fd; border: 1px solid rgba(59,130,246,0.22);
-  letter-spacing: 0.4px; white-space: nowrap;
+.topbar-pill {
+  font-family: var(--ff-mono);
+  font-size: 10.5px; font-weight: 500;
+  padding: 4px 13px; border-radius: 100px;
+  background: rgba(245,166,35,0.08);
+  color: var(--gold-l);
+  border: 1px solid rgba(245,166,35,0.20);
+  letter-spacing: 0.3px;
 }
 
-/* Nav login button */
-.nav-login-btn .stButton > button {
-  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
-  color: #fff !important; font-family: var(--font) !important;
-  font-weight: 600 !important; font-size: 14px !important;
-  border: none !important; border-radius: 8px !important;
-  padding: 0 20px !important; height: 36px !important;
-  width: auto !important; cursor: pointer !important;
-  transition: all 0.2s !important; letter-spacing: -0.2px !important;
-}
-.nav-login-btn .stButton > button:hover {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 6px 20px rgba(59,130,246,0.38) !important;
-}
-
-/* ══════════════════════════════
-   HERO
-══════════════════════════════ */
-.da-hero {
-  padding: 96px 48px 72px;
+/* ══════════════════════════════════════════════
+   HERO SECTION
+══════════════════════════════════════════════ */
+.hero-wrap {
+  padding: 88px 40px 72px;
   text-align: center;
   position: relative;
   overflow: hidden;
 }
-.da-hero::before {
+/* Atmospheric mesh glow */
+.hero-wrap::before {
   content: '';
-  position: absolute; top: -180px; left: 50%;
+  position: absolute; top: -80px; left: 50%;
   transform: translateX(-50%);
-  width: 900px; height: 600px;
-  background: radial-gradient(ellipse, rgba(59,130,246,0.09) 0%, rgba(139,92,246,0.05) 45%, transparent 70%);
+  width: 100%; max-width: 900px; height: 520px;
+  background:
+    radial-gradient(ellipse 55% 55% at 40% 45%, rgba(245,166,35,0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 45% at 65% 55%, rgba(20,184,166,0.06) 0%, transparent 65%);
   pointer-events: none; z-index: 0;
 }
-.da-hero > * { position: relative; z-index: 1; }
+/* Grain texture overlay */
+.hero-wrap::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+.hero-wrap > * { position: relative; z-index: 1; }
 
-.da-chip {
+.hero-eyebrow {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 6px 16px; border-radius: 20px;
-  background: rgba(16,185,129,0.09);
-  border: 1px solid rgba(16,185,129,0.22);
-  font-size: 11px; font-weight: 700; color: #34d399;
-  letter-spacing: 1px; text-transform: uppercase;
-  margin-bottom: 28px;
+  padding: 5px 15px; border-radius: 100px;
+  background: rgba(20,184,166,0.07);
+  border: 1px solid rgba(20,184,166,0.20);
+  font-family: var(--ff-mono);
+  font-size: 10px; font-weight: 500;
+  color: var(--teal-l); letter-spacing: 1.5px;
+  text-transform: uppercase; margin-bottom: 28px;
+  animation: fade-rise 0.7s ease both;
 }
-.da-h1 {
-  font-size: clamp(38px, 5.5vw, 68px);
-  font-weight: 800; line-height: 1.06;
-  letter-spacing: -2.5px; color: var(--text);
-  margin-bottom: 10px;
+.hero-eyebrow-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--teal); flex-shrink: 0;
+  animation: pulse-live 2s infinite;
 }
-.da-h1 .grad {
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #a78bfa 100%);
+
+.hero-h1 {
+  font-family: var(--ff-display);
+  font-size: clamp(40px, 6.5vw, 76px);
+  font-weight: 800; line-height: 1.02;
+  letter-spacing: -3px; color: var(--t1);
+  margin-bottom: 6px;
+  animation: fade-rise 0.7s 0.08s ease both;
+}
+.hero-h1 .gold-text {
+  background: linear-gradient(90deg, var(--gold-l), var(--gold), #d4861a, var(--gold), var(--gold-l));
+  background-size: 300% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  animation: gold-shimmer 5s linear infinite;
 }
-.da-hero-sub {
-  font-size: 17px; font-weight: 400; color: var(--text3);
-  line-height: 1.75; max-width: 560px;
-  margin: 0 auto 44px;
+.hero-sub {
+  font-family: var(--ff-body);
+  font-size: clamp(15px, 1.8vw, 17px);
+  font-weight: 300; color: var(--t3);
+  line-height: 1.8; max-width: 520px;
+  margin: 16px auto 44px;
   text-align: center;
+  animation: fade-rise 0.7s 0.16s ease both;
 }
 
-/* CTA buttons */
-.cta-primary .stButton > button {
-  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
-  color: #fff !important; font-family: var(--font) !important;
-  font-weight: 700 !important; font-size: 15px !important;
-  border: none !important; border-radius: 10px !important;
-  height: 50px !important; padding: 0 34px !important;
-  width: auto !important; cursor: pointer !important;
-  transition: all 0.2s !important; letter-spacing: -0.3px !important;
+/* Primary CTA */
+.cta-btn .stButton > button {
+  background: linear-gradient(135deg, var(--gold), var(--gold-d)) !important;
+  color: #06080f !important;
+  font-family: var(--ff-display) !important;
+  font-weight: 700 !important; font-size: 14px !important;
+  border: none !important; border-radius: var(--r-sm) !important;
+  height: 48px !important; padding: 0 32px !important;
+  width: auto !important;
+  letter-spacing: -0.2px !important;
+  transition: all 0.22s ease !important;
+  box-shadow: 0 0 28px rgba(245,166,35,0.25) !important;
+  animation: glow-pulse 3s ease-in-out infinite !important;
 }
-.cta-primary .stButton > button:hover {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 14px 36px rgba(59,130,246,0.42) !important;
-}
-.cta-secondary .stButton > button {
-  background: transparent !important; color: var(--text3) !important;
-  font-family: var(--font) !important; font-weight: 500 !important;
-  font-size: 15px !important; border: 1px solid var(--border2) !important;
-  border-radius: 10px !important; height: 50px !important;
-  padding: 0 28px !important; width: auto !important;
-  cursor: pointer !important; transition: all 0.2s !important;
-}
-.cta-secondary .stButton > button:hover {
-  border-color: rgba(255,255,255,0.28) !important;
-  color: var(--text) !important;
-  transform: translateY(-2px) !important;
+.cta-btn .stButton > button:hover {
+  background: linear-gradient(135deg, var(--gold-l), var(--gold)) !important;
+  transform: translateY(-2px) scale(1.01) !important;
+  box-shadow: 0 10px 40px rgba(245,166,35,0.40) !important;
 }
 
-/* ══════════════════════════════
-   STATS BAR
-══════════════════════════════ */
-.da-stats-bar {
-  display: flex; justify-content: center;
-  margin: 0 48px;
-  border: 1px solid var(--border);
-  border-radius: 14px; overflow: hidden;
+/* ══════════════════════════════════════════════
+   STATS STRIP
+══════════════════════════════════════════════ */
+.stats-strip {
+  display: flex;
+  margin: 0 40px;
+  border: 1px solid var(--b2);
+  border-radius: var(--r-md);
   background: var(--bg2);
+  overflow: hidden;
+  position: relative;
 }
-.da-stat-item {
-  flex: 1; padding: 26px 24px; text-align: center;
-  border-right: 1px solid var(--border);
-  transition: background 0.2s;
+.stats-strip::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245,166,35,0.4), transparent);
 }
-.da-stat-item:last-child { border-right: none; }
-.da-stat-item:hover      { background: rgba(255,255,255,0.04); }
-.da-stat-num {
-  font-size: 28px; font-weight: 800; line-height: 1;
-  margin-bottom: 5px; letter-spacing: -0.8px;
+.stat-block {
+  flex: 1; padding: 24px 20px; text-align: center;
+  border-right: 1px solid var(--b1);
+  transition: background 0.22s;
+  cursor: default;
 }
-.blue-text   { color: #60a5fa; }
-.green-text  { color: #34d399; }
-.purple-text { color: #a78bfa; }
-.orange-text { color: #fbbf24; }
-.da-stat-label {
-  font-size: 11px; font-weight: 600;
-  color: var(--text4); text-transform: uppercase; letter-spacing: 0.7px;
+.stat-block:last-child { border-right: none; }
+.stat-block:hover      { background: rgba(245,166,35,0.04); }
+.stat-num {
+  font-family: var(--ff-display);
+  font-size: 28px; font-weight: 800;
+  line-height: 1; margin-bottom: 5px; letter-spacing: -1px;
+}
+.s-gold   { color: var(--gold); }
+.s-teal   { color: var(--teal-l); }
+.s-violet { color: var(--violet); }
+.s-rose   { color: var(--rose); }
+.stat-lbl {
+  font-family: var(--ff-mono);
+  font-size: 10px; font-weight: 500;
+  color: var(--t4); text-transform: uppercase; letter-spacing: 1px;
 }
 
-/* ══════════════════════════════
-   DIVIDER
-══════════════════════════════ */
-.da-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border), transparent);
-  margin: 0 48px;
+/* ══════════════════════════════════════════════
+   SECTION LAYOUT
+══════════════════════════════════════════════ */
+.section {
+  padding: 72px 40px 56px;
+  max-width: 1180px; margin: 0 auto;
+}
+.section.tight-b { padding-bottom: 24px; }
+.section.no-t    { padding-top: 0; }
+
+.divider-line {
+  height: 1px; margin: 0 40px;
+  background: linear-gradient(90deg, transparent, var(--b2), transparent);
+}
+.sec-label {
+  font-family: var(--ff-mono);
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 10px;
+}
+.sec-heading {
+  font-family: var(--ff-display);
+  font-size: clamp(22px, 3.2vw, 36px);
+  font-weight: 800; color: var(--t1);
+  letter-spacing: -1.2px; line-height: 1.12;
+  margin-bottom: 40px; max-width: 460px;
+}
+.sec-heading.wide   { max-width: none; }
+.sec-heading.center { max-width: none; text-align: center; }
+
+/* ══════════════════════════════════════════════
+   CAPABILITY CARDS — 2×2 grid
+══════════════════════════════════════════════ */
+.cap-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.cap-card {
+  background: var(--bg2);
+  border: 1px solid var(--b2); border-radius: var(--r-md);
+  padding: 28px 26px; position: relative; overflow: hidden;
+  transition: border-color 0.22s, transform 0.22s;
+}
+.cap-card::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: var(--r-md);
+  background: linear-gradient(135deg, rgba(245,166,35,0.04) 0%, transparent 60%);
+  opacity: 0; transition: opacity 0.22s;
+}
+.cap-card:hover { border-color: rgba(245,166,35,0.28); transform: translateY(-3px); }
+.cap-card:hover::before { opacity: 1; }
+.cap-num {
+  position: absolute; top: 16px; right: 20px;
+  font-family: var(--ff-display); font-size: 42px; font-weight: 800;
+  color: rgba(255,255,255,0.025); line-height: 1; user-select: none;
+}
+.cap-ico {
+  width: 40px; height: 40px; border-radius: var(--r-xs);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; margin-bottom: 14px;
+}
+.ico-g { background: rgba(245,166,35,0.10); }
+.ico-t { background: rgba(20,184,166,0.10); }
+.ico-v { background: rgba(129,140,248,0.10); }
+.ico-r { background: rgba(251,113,133,0.10); }
+.cap-title {
+  font-family: var(--ff-display);
+  font-size: 15px; font-weight: 700; color: var(--t1);
+  margin-bottom: 8px; letter-spacing: -0.2px;
+}
+.cap-desc {
+  font-family: var(--ff-body);
+  font-size: 13px; font-weight: 300; color: var(--t3); line-height: 1.75;
 }
 
-/* ══════════════════════════════
-   SECTION WRAPPER
-══════════════════════════════ */
-.sec { padding: 72px 48px 56px; max-width: 1160px; margin: 0 auto; }
-.sec-eye   { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--blue); margin-bottom:12px; }
-.sec-title { font-size:clamp(24px,3.5vw,38px); font-weight:800; color:var(--text); letter-spacing:-1.3px; line-height:1.15; margin-bottom:44px; max-width:520px; }
-.sec-title-center { max-width:none; text-align:center; }
-
-/* ══════════════════════════════
-   FEATURE CARDS
-══════════════════════════════ */
-.feat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
-.feat-card {
-  background: var(--bg2); border:1px solid var(--border); border-radius:14px;
-  padding:30px; position:relative; overflow:hidden;
-  transition: border-color 0.2s, transform 0.2s;
-}
-.feat-card:hover { border-color:var(--border2); transform:translateY(-2px); }
-.feat-card-num {
-  position:absolute; top:20px; right:24px;
-  font-size:48px; font-weight:800; color:rgba(255,255,255,0.025);
-  font-family:var(--mono); line-height:1; user-select:none;
-}
-.feat-icon {
-  width:42px; height:42px; border-radius:10px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:19px; margin-bottom:16px;
-}
-.feat-icon.b { background:rgba(59,130,246,0.12); }
-.feat-icon.p { background:rgba(139,92,246,0.12); }
-.feat-icon.g { background:rgba(16,185,129,0.12); }
-.feat-icon.o { background:rgba(245,158,11,0.12); }
-.feat-title { font-size:16px; font-weight:700; color:var(--text); margin-bottom:9px; letter-spacing:-0.3px; }
-.feat-desc  { font-size:14px; font-weight:400; color:var(--text3); line-height:1.72; }
-
-/* ══════════════════════════════
-   AGENT CREW CARDS
-══════════════════════════════ */
-.crew-grid { display:flex; gap:14px; }
+/* ══════════════════════════════════════════════
+   AGENT CREW CARDS — 3 columns
+══════════════════════════════════════════════ */
+.crew-row  { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
 .crew-card {
-  flex:1; background:var(--bg2); border:1px solid var(--border);
-  border-radius:14px; padding:26px;
-  transition:border-color 0.2s, transform 0.2s;
+  background: var(--bg2); border: 1px solid var(--b2); border-radius: var(--r-md);
+  padding: 24px; position: relative; overflow: hidden;
+  transition: border-color 0.22s, transform 0.22s;
 }
-.crew-card:hover { border-color:var(--border2); transform:translateY(-2px); }
-.crew-emoji { font-size:28px; margin-bottom:12px; }
-.crew-tag   { font-size:11px; font-weight:700; color:var(--blue); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:5px; }
-.crew-name  { font-size:16px; font-weight:700; color:var(--text); margin-bottom:9px; letter-spacing:-0.3px; }
-.crew-desc  { font-size:13px; color:var(--text3); line-height:1.68; }
+.crew-card:hover { border-color: rgba(20,184,166,0.30); transform: translateY(-3px); }
+.crew-card-bar {
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--teal));
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.35s ease;
+}
+.crew-card:hover .crew-card-bar { transform: scaleX(1); }
+.crew-emo  { font-size: 26px; margin-bottom: 10px; }
+.crew-tag  {
+  font-family: var(--ff-mono); font-size: 10px; font-weight: 500;
+  color: var(--teal-l); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;
+}
+.crew-name {
+  font-family: var(--ff-display);
+  font-size: 15px; font-weight: 700; color: var(--t1);
+  margin-bottom: 8px; letter-spacing: -0.2px;
+}
+.crew-desc { font-family: var(--ff-body); font-size: 12.5px; color: var(--t3); line-height: 1.7; }
 
-/* ══════════════════════════════
-   WORKFLOW STEPS
-══════════════════════════════ */
-.steps-wrap { padding:0 48px 72px; max-width:1160px; margin:0 auto; }
-.steps-row  { display:flex; position:relative; }
+/* ══════════════════════════════════════════════
+   HOW IT WORKS — horizontal steps
+══════════════════════════════════════════════ */
+.steps-row {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  position: relative;
+}
 .steps-row::before {
-  content:''; position:absolute; top:23px; left:40px; right:40px; height:1px;
-  background:linear-gradient(90deg,var(--blue),var(--purple),var(--green)); z-index:0;
+  content: '';
+  position: absolute; top: 21px;
+  left: calc(12.5%); right: calc(12.5%); height: 1px;
+  background: linear-gradient(90deg, var(--gold), var(--teal), var(--violet), var(--rose));
+  z-index: 0;
 }
-.step { flex:1; display:flex; flex-direction:column; align-items:center; text-align:center; gap:12px; position:relative; z-index:1; }
-.step-circle {
-  width:46px; height:46px; border-radius:50%; background:var(--bg);
-  border:2px solid var(--blue);
-  display:flex; align-items:center; justify-content:center;
-  font-size:14px; font-weight:700; color:var(--blue);
+.step {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; gap: 12px; position: relative; z-index: 1; padding: 0 10px;
 }
-.step:nth-child(2) .step-circle { border-color:var(--purple); color:var(--purple); }
-.step:nth-child(3) .step-circle { border-color:var(--green);  color:var(--green); }
-.step:nth-child(4) .step-circle { border-color:var(--orange); color:var(--orange); }
-.step-title { font-size:14px; font-weight:700; color:var(--text); }
-.step-desc  { font-size:12px; color:var(--text3); line-height:1.65; max-width:130px; }
+.step-n {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: var(--bg1); border: 1.5px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--ff-mono); font-size: 13px; font-weight: 500; color: var(--gold);
+}
+.step:nth-child(2) .step-n { border-color: var(--teal); color: var(--teal); }
+.step:nth-child(3) .step-n { border-color: var(--violet); color: var(--violet); }
+.step:nth-child(4) .step-n { border-color: var(--rose); color: var(--rose); }
+.step-title { font-family: var(--ff-display); font-size: 13px; font-weight: 700; color: var(--t1); }
+.step-desc  { font-family: var(--ff-body); font-size: 12px; color: var(--t3); line-height: 1.6; max-width: 120px; }
 
-/* ══════════════════════════════
+/* ══════════════════════════════════════════════
    TECH BADGES
-══════════════════════════════ */
-.badges { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; padding:0 48px 72px; }
-.badge {
-  padding:8px 18px; border-radius:8px; font-size:13px; font-weight:600;
-  color:var(--text2); background:var(--bg2); border:1px solid var(--border);
-  transition:all 0.18s;
+══════════════════════════════════════════════ */
+.badge-row  { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.tech-badge {
+  padding: 7px 16px; border-radius: var(--r-xs);
+  font-family: var(--ff-mono); font-size: 11.5px; font-weight: 500;
+  color: var(--t3); background: var(--bg2); border: 1px solid var(--b2);
+  transition: all 0.18s;
 }
-.badge:hover { border-color:var(--blue); color:var(--text); background:rgba(59,130,246,0.07); }
+.tech-badge:hover { border-color: rgba(245,166,35,0.35); color: var(--t1); background: rgba(245,166,35,0.05); }
 
-/* ══════════════════════════════
-   FOOTER
-══════════════════════════════ */
-.da-footer {
-  padding:26px 48px; border-top:1px solid var(--border);
-  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-top:32px;
+/* ══════════════════════════════════════════════
+   PAGE FOOTER
+══════════════════════════════════════════════ */
+.pg-footer {
+  padding: 24px 40px; margin-top: 24px;
+  border-top: 1px solid var(--b1);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
 }
-.foot-text { font-size:13px; color:var(--text4); }
+.pg-footer-brand {
+  display: flex; align-items: center; gap: 9px;
+  font-family: var(--ff-display); font-size: 13px; font-weight: 700; color: var(--t2);
+}
+.pg-footer-logo {
+  width: 24px; height: 24px; border-radius: 5px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-d));
+  display: flex; align-items: center; justify-content: center; font-size: 12px;
+}
+.pg-footer-txt { font-family: var(--ff-mono); font-size: 11px; color: var(--t4); }
 
-/* ══════════════════════════════
-   LOGIN PAGE
-══════════════════════════════ */
-.login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
-.login-card {
-  width:100%; max-width:410px;
-  background:var(--bg2); border:1px solid var(--border2);
-  border-radius:18px; padding:42px 38px; position:relative; overflow:hidden;
-}
-.login-card::before {
-  content:''; position:absolute; top:0; left:20%; right:20%; height:1px;
-  background:linear-gradient(90deg,transparent,var(--blue),transparent);
-}
-.login-emoji { font-size:32px; margin-bottom:14px; }
-.login-title { font-size:22px; font-weight:800; color:var(--text); letter-spacing:-0.7px; margin-bottom:6px; }
-.login-sub   { font-size:13px; color:var(--text3); margin-bottom:28px; line-height:1.55; }
-.login-hint  { text-align:center; font-size:12px; color:var(--text4); margin-top:14px; }
-.login-hint b{ color:#60a5fa; font-weight:600; }
+/* ══════════════════════════════════════════════
+   DASHBOARD — specific styles
+══════════════════════════════════════════════ */
 
-/* Input styles inside login */
-.login-card [data-testid="stTextInput"] input {
-  background: rgba(255,255,255,0.06) !important;
-  border: 1px solid var(--border2) !important;
-  border-radius: 9px !important;
-  color: var(--text) !important;
-  font-family: var(--font) !important;
-  font-size: 14px !important;
-  transition: border-color 0.2s, box-shadow 0.2s !important;
-}
-.login-card [data-testid="stTextInput"] input:focus {
-  border-color: rgba(59,130,246,0.6) !important;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.12) !important;
-}
-.login-card [data-testid="stTextInput"] input::placeholder { color: var(--text4) !important; }
-.login-card label {
-  color: var(--text3) !important; font-size: 11px !important;
-  font-weight: 700 !important; letter-spacing: 0.7px !important; text-transform: uppercase !important;
+/* Dashboard section heading */
+.d-sec {
+  font-family: var(--ff-display);
+  font-size: 14px; font-weight: 700; color: var(--t1);
+  letter-spacing: -0.1px;
+  padding-bottom: 13px; margin-bottom: 16px;
+  border-bottom: 1px solid var(--b1);
+  display: flex; align-items: center; gap: 8px;
 }
 
-.submit-btn .stButton > button {
-  width:100% !important; height:48px !important;
-  background:linear-gradient(135deg,#3b82f6,#2563eb) !important;
-  color:#fff !important; font-family:var(--font) !important;
-  font-weight:700 !important; font-size:15px !important;
-  border:none !important; border-radius:9px !important;
-  cursor:pointer !important; transition:all 0.2s !important; letter-spacing:-0.2px !important;
-}
-.submit-btn .stButton > button:hover {
-  transform:translateY(-1px) !important;
-  box-shadow:0 10px 28px rgba(59,130,246,0.38) !important;
-}
-.back-btn .stButton > button {
-  width:100% !important; height:38px !important;
-  background:transparent !important; color:var(--text3) !important;
-  border:1px solid var(--border) !important; border-radius:8px !important;
-  font-size:13px !important; font-weight:500 !important; font-family:var(--font) !important;
-  cursor:pointer !important; transition:all 0.2s !important;
-}
-.back-btn .stButton > button:hover { border-color:var(--border2) !important; color:var(--text) !important; }
-
-/* Alert */
-[data-testid="stAlert"] { border-radius:10px !important; font-family:var(--font) !important; font-size:14px !important; }
-
-/* ══════════════════════════════
-   DASHBOARD
-══════════════════════════════ */
-.dash-nav {
-  position:sticky; top:0; z-index:500; height:60px; padding:0 36px;
-  display:flex; align-items:center; justify-content:space-between;
-  background:rgba(10,15,30,0.95); backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--border);
-}
-.dash-title { font-size:15px; font-weight:700; color:var(--text); letter-spacing:-0.3px; display:flex; align-items:center; gap:8px; }
-.dash-sub   { font-size:12px; color:var(--text4); margin-top:1px; }
-
-.logout-btn .stButton > button {
-  width:auto !important; height:34px !important; padding:0 16px !important;
-  background:transparent !important; color:var(--text3) !important;
-  border:1px solid var(--border) !important; border-radius:7px !important;
-  font-size:13px !important; font-weight:500 !important; font-family:var(--font) !important;
-  cursor:pointer !important; transition:all 0.2s !important;
-}
-.logout-btn .stButton > button:hover { border-color:rgba(239,68,68,0.4) !important; color:#f87171 !important; }
-
-/* Metrics */
+/* Metric cards */
 [data-testid="stMetric"] {
-  background:var(--bg2) !important; border:1px solid var(--border) !important;
-  border-radius:12px !important; padding:20px 22px !important;
-  transition:border-color 0.2s !important;
+  background: var(--bg2) !important;
+  border: 1px solid var(--b2) !important;
+  border-radius: var(--r-md) !important;
+  padding: 18px 20px !important;
+  position: relative !important; overflow: hidden !important;
+  transition: border-color 0.2s !important;
 }
-[data-testid="stMetric"]:hover { border-color:var(--border2) !important; }
+[data-testid="stMetric"]::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--teal));
+}
+[data-testid="stMetric"]:hover { border-color: rgba(245,166,35,0.28) !important; }
 [data-testid="stMetricValue"] {
-  font-family:var(--font) !important; font-size:26px !important;
-  font-weight:800 !important; color:var(--text) !important; letter-spacing:-0.7px !important;
+  font-family: var(--ff-display) !important;
+  font-size: 26px !important; font-weight: 800 !important;
+  color: var(--t1) !important; letter-spacing: -0.8px !important;
 }
 [data-testid="stMetricLabel"] {
-  font-family:var(--font) !important; font-size:11px !important;
-  font-weight:600 !important; color:var(--text4) !important;
-  text-transform:uppercase !important; letter-spacing:0.6px !important;
+  font-family: var(--ff-mono) !important;
+  font-size: 10px !important; font-weight: 500 !important;
+  color: var(--t4) !important; text-transform: uppercase !important;
+  letter-spacing: 0.9px !important;
 }
+[data-testid="stMetricDelta"] { display: none !important; }
 
 /* File uploader */
 [data-testid="stFileUploader"] > div {
-  background:rgba(59,130,246,0.04) !important;
-  border:2px dashed rgba(59,130,246,0.26) !important;
-  border-radius:12px !important; transition:all 0.2s !important;
+  background: rgba(245,166,35,0.03) !important;
+  border: 2px dashed rgba(245,166,35,0.20) !important;
+  border-radius: var(--r-md) !important; transition: all 0.22s !important;
 }
 [data-testid="stFileUploader"] > div:hover {
-  border-color:rgba(59,130,246,0.52) !important;
-  background:rgba(59,130,246,0.07) !important;
+  border-color: rgba(245,166,35,0.45) !important;
+  background: rgba(245,166,35,0.06) !important;
 }
-[data-testid="stFileUploader"] label { color:var(--text3) !important; font-family:var(--font) !important; }
-
-/* Dashboard section heading */
-.dash-sec {
-  font-size:15px; font-weight:700; color:var(--text); letter-spacing:-0.3px;
-  padding-bottom:14px; margin-bottom:18px; border-bottom:1px solid var(--border);
-  display:flex; align-items:center; gap:8px;
+[data-testid="stFileUploader"] label {
+  color: var(--t3) !important; font-family: var(--ff-body) !important; font-size: 14px !important;
+}
+[data-testid="stFileUploader"] button {
+  background: var(--bg3) !important; border: 1px solid var(--b2) !important;
+  color: var(--t2) !important; border-radius: var(--r-xs) !important;
+  font-family: var(--ff-body) !important;
 }
 
 /* Result card */
-.res-card {
-  background:var(--bg2); border:1px solid var(--border); border-radius:13px;
-  padding:22px 26px; margin-bottom:14px; transition:border-color 0.2s;
+.r-card {
+  background: var(--bg2); border: 1px solid var(--b2);
+  border-radius: var(--r-md); padding: 20px 24px;
+  transition: border-color 0.22s;
 }
-.res-card:hover { border-color:var(--border2); }
-.res-label {
-  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.7px;
-  color:var(--text4); margin-bottom:13px; display:flex; align-items:center; gap:7px;
+.r-card:hover { border-color: rgba(245,166,35,0.20); }
+
+/* Result card label */
+.r-lbl {
+  font-family: var(--ff-mono);
+  font-size: 10px; font-weight: 500; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--gold);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 7px;
 }
 
-/* Make markdown output readable */
-.res-card p, .res-card li { color:var(--text2) !important; font-size:14px !important; line-height:1.75 !important; }
+/* Markdown output — readable on dark */
 [data-testid="stMarkdownContainer"] p,
-[data-testid="stMarkdownContainer"] li  { color:var(--text2) !important; font-size:14px !important; line-height:1.75 !important; }
+[data-testid="stMarkdownContainer"] li {
+  color: var(--t2) !important;
+  font-family: var(--ff-body) !important;
+  font-size: 14px !important; line-height: 1.80 !important;
+  font-weight: 300 !important;
+}
 [data-testid="stMarkdownContainer"] h1,
 [data-testid="stMarkdownContainer"] h2,
-[data-testid="stMarkdownContainer"] h3  { color:var(--text) !important; font-family:var(--font) !important; letter-spacing:-0.5px !important; }
-[data-testid="stMarkdownContainer"] strong { color:var(--text) !important; }
-[data-testid="stMarkdownContainer"] code  { background:rgba(255,255,255,0.07) !important; color:#93c5fd !important; font-family:var(--mono) !important; border-radius:4px !important; padding:1px 6px !important; }
-
-/* Spinner */
-.stSpinner > div { border-top-color:var(--blue) !important; }
-
-/* Download button */
-.dl-btn .stDownloadButton > button {
-  background:transparent !important; color:#60a5fa !important;
-  border:1px solid rgba(59,130,246,0.35) !important; border-radius:9px !important;
-  font-family:var(--font) !important; font-weight:600 !important; font-size:14px !important;
-  height:42px !important; padding:0 24px !important; cursor:pointer !important; transition:all 0.2s !important;
+[data-testid="stMarkdownContainer"] h3 {
+  color: var(--t1) !important;
+  font-family: var(--ff-display) !important;
+  letter-spacing: -0.5px !important; font-weight: 700 !important;
 }
-.dl-btn .stDownloadButton > button:hover {
-  background:rgba(59,130,246,0.09) !important; border-color:var(--blue) !important;
+[data-testid="stMarkdownContainer"] strong { color: var(--t1) !important; font-weight: 600 !important; }
+[data-testid="stMarkdownContainer"] ul,
+[data-testid="stMarkdownContainer"] ol    { padding-left: 18px !important; }
+[data-testid="stMarkdownContainer"] code {
+  background: rgba(245,166,35,0.10) !important;
+  color: var(--gold-l) !important;
+  font-family: var(--ff-mono) !important;
+  border-radius: 4px !important; padding: 1px 7px !important; font-size: 12.5px !important;
 }
-
-/* Images */
-[data-testid="stImage"] img { border-radius:12px !important; }
 
 /* Dataframe */
-[data-testid="stDataFrame"] { border-radius:11px !important; overflow:hidden; }
+[data-testid="stDataFrame"] { border-radius: var(--r-md) !important; overflow: hidden !important; }
 
-/* Empty state */
-.empty-state {
-  text-align:center; padding:64px 32px;
-  border:2px dashed rgba(59,130,246,0.18); border-radius:14px;
-  background:rgba(59,130,246,0.02); max-width:500px; margin:28px auto;
+/* Spinner */
+.stSpinner > div { border-top-color: var(--gold) !important; }
+
+/* Images */
+[data-testid="stImage"] img { border-radius: var(--r-md) !important; }
+
+/* Download button */
+.dl-wrap .stDownloadButton > button {
+  background: transparent !important;
+  color: var(--gold-l) !important;
+  border: 1px solid rgba(245,166,35,0.30) !important;
+  border-radius: var(--r-sm) !important;
+  font-family: var(--ff-body) !important;
+  font-weight: 600 !important; font-size: 13px !important;
+  height: 42px !important; padding: 0 24px !important;
+  transition: all 0.2s !important;
 }
-.empty-icon  { font-size:44px; margin-bottom:16px; opacity:0.55; }
-.empty-title { font-size:19px; font-weight:700; color:var(--text); margin-bottom:9px; letter-spacing:-0.3px; }
-.empty-sub   { font-size:14px; color:var(--text3); line-height:1.7; }
+.dl-wrap .stDownloadButton > button:hover {
+  background: rgba(245,166,35,0.08) !important;
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 16px rgba(245,166,35,0.18) !important;
+}
 
-/* Responsive */
-@media (max-width:768px) {
-  .da-nav, .dash-nav      { padding:0 18px; }
-  .da-hero                { padding:60px 18px 48px; }
-  .da-h1                  { letter-spacing:-1.5px; }
-  .feat-grid              { grid-template-columns:1fr; }
-  .steps-row::before      { display:none; }
-  .steps-row              { flex-direction:column; align-items:center; gap:24px; }
-  .crew-grid              { flex-direction:column; }
-  .sec, .steps-wrap, .badges { padding-left:18px; padding-right:18px; }
-  .da-stats-bar           { flex-direction:column; margin:0 18px; border-radius:12px; }
-  .da-stat-item           { border-right:none !important; border-bottom:1px solid var(--border); }
-  .da-stat-item:last-child{ border-bottom:none; }
-  .da-divider, .da-footer { margin-left:18px; margin-right:18px; }
+/* Home button in dash nav */
+.home-btn .stButton > button {
+  width: auto !important; height: 32px !important; padding: 0 14px !important;
+  background: transparent !important; color: var(--t3) !important;
+  border: 1px solid var(--b2) !important; border-radius: var(--r-xs) !important;
+  font-family: var(--ff-body) !important; font-size: 12px !important;
+  font-weight: 500 !important; transition: all 0.2s !important;
+}
+.home-btn .stButton > button:hover {
+  border-color: rgba(245,166,35,0.35) !important;
+  color: var(--gold-l) !important;
+}
+
+/* Alert */
+[data-testid="stAlert"] {
+  border-radius: var(--r-sm) !important;
+  font-family: var(--ff-body) !important; font-size: 14px !important;
+}
+
+/* Empty upload state */
+.empty-box {
+  text-align: center; padding: 60px 28px;
+  border: 1.5px dashed rgba(245,166,35,0.15);
+  border-radius: var(--r-lg);
+  background: rgba(245,166,35,0.02);
+  max-width: 480px; margin: 24px auto;
+}
+.e-icon  { font-size: 40px; margin-bottom: 14px; opacity: 0.45; }
+.e-title {
+  font-family: var(--ff-display);
+  font-size: 18px; font-weight: 700; color: var(--t1); margin-bottom: 8px; letter-spacing: -0.3px;
+}
+.e-sub {
+  font-family: var(--ff-body);
+  font-size: 13.5px; font-weight: 300; color: var(--t3); line-height: 1.72;
+}
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .topbar                { padding: 0 16px; }
+  .hero-wrap             { padding: 56px 16px 48px; }
+  .hero-h1               { letter-spacing: -2px; }
+  .stats-strip           { flex-direction: column; margin: 0 16px; border-radius: var(--r-md); }
+  .stat-block            { border-right: none !important; border-bottom: 1px solid var(--b1); }
+  .stat-block:last-child { border-bottom: none; }
+  .cap-grid              { grid-template-columns: 1fr; }
+  .crew-row              { grid-template-columns: 1fr; }
+  .steps-row             { grid-template-columns: repeat(2,1fr); gap: 20px; }
+  .steps-row::before     { display: none; }
+  .section               { padding: 52px 16px 40px; }
+  .divider-line          { margin: 0 16px; }
+  .badge-row             { padding: 0 16px; }
+  .pg-footer             { padding: 20px 16px; flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 480px) {
+  .steps-row  { grid-template-columns: 1fr; }
+  .hero-h1    { font-size: 34px; letter-spacing: -1.5px; }
+  .topbar     { height: 54px; }
 }
 </style>
 """
+
 
 # ─────────────────────────────────────────────────────────────
 # HELPERS
@@ -555,179 +676,169 @@ def html(code):
 def page_landing():
     inject()
 
-    # ── Navbar ──
-    nav_l, nav_r = st.columns([5, 1])
-    with nav_l:
-        html("""
-        <div class="da-nav">
-          <div class="da-logo">
-            <div class="da-logo-box">📊</div>
-            Data Analyst AI Agent
-            <div class="da-live-dot"></div>
-          </div>
-          <div class="da-nav-pill">Powered by CrewAI</div>
-        </div>
-        """)
-    with nav_r:
-        html('<div class="da-nav" style="justify-content:flex-end;padding-right:28px;">')
-        html('<div class="nav-login-btn">')
-        if st.button("Login →", key="nav_login"):
-            st.session_state.page = "login"
-            st.rerun()
-        html('</div></div>')
+    # ── Top bar ──
+    html("""
+    <div class="topbar">
+      <div class="topbar-brand">
+        <div class="topbar-logo">📊</div>
+        Data Analyst AI Agent
+        <div class="topbar-dot"></div>
+      </div>
+      <span class="topbar-pill">CrewAI · Multi-Agent EDA</span>
+    </div>
+    """)
 
     # ── Hero ──
     html("""
-    <div class="da-hero">
-      <div class="da-chip">
-        <div class="da-live-dot"></div>
-        Multi-Agent AI · Built with CrewAI · Automated EDA
+    <div class="hero-wrap">
+      <div class="hero-eyebrow">
+        <span class="hero-eyebrow-dot"></span>
+        Automated EDA · Zero Code Required · Instant Insights
       </div>
-      <div class="da-h1">
-        Automated Data Analysis<br/>
-        <span class="grad">Powered by AI Agents</span>
+      <div class="hero-h1">
+        Your Data, Decoded<br>
+        <span class="gold-text">by AI Agents</span>
       </div>
-      <p class="da-hero-sub" style="text-align:center;margin-left:auto;margin-right:auto;">
+      <p class="da-hero-sub" style="text-align:center; margin-left:auto; margin-right:auto;">
         Upload any CSV and a specialized crew of AI agents will automatically
-        compute statistics, generate smart analytical questions, create visualizations,
+        compute statistics, generate analytical questions, create visualizations,
         and produce business-ready summaries — end to end.
       </p>
     </div>
     """)
 
-    _, c1, g, c2, _ = st.columns([2.6, 1.0, 0.18, 1.1, 2.6])
-    with c1:
-        html('<div class="cta-primary">')
-        if st.button("🚀  Start Analyzing", key="hero_cta"):
-            st.session_state.page = "login"
+    # CTA centered
+    _, mid, _ = st.columns([2.4, 1.2, 2.4])
+    with mid:
+        html('<div class="cta-btn">')
+        if st.button("🚀  Analyze My Data", key="hero_cta"):
+            st.session_state.page = "dashboard"
             st.rerun()
-        html('</div>')
-    with c2:
-        html('<div class="cta-secondary">')
-        if st.button("Learn More ↓", key="hero_learn"):
-            pass
         html('</div>')
 
     st.markdown("<br><br>", unsafe_allow_html=True)
 
-    # ── Stats bar ──
+    # ── Stats strip ──
     html("""
-    <div class="da-stats-bar">
-      <div class="da-stat-item">
-        <div class="da-stat-num blue-text">3</div>
-        <div class="da-stat-label">Specialized AI Agents</div>
+    <div class="stats-strip">
+      <div class="stat-block">
+        <div class="stat-num s-gold">3</div>
+        <div class="stat-lbl">AI Agents</div>
       </div>
-      <div class="da-stat-item">
-        <div class="da-stat-num green-text">&lt;60s</div>
-        <div class="da-stat-label">Full EDA Runtime</div>
+      <div class="stat-block">
+        <div class="stat-num s-teal">&lt;60s</div>
+        <div class="stat-lbl">Full EDA</div>
       </div>
-      <div class="da-stat-item">
-        <div class="da-stat-num purple-text">Auto</div>
-        <div class="da-stat-label">Chart Generation</div>
+      <div class="stat-block">
+        <div class="stat-num s-violet">Auto</div>
+        <div class="stat-lbl">Charts</div>
       </div>
-      <div class="da-stat-item">
-        <div class="da-stat-num orange-text">0</div>
-        <div class="da-stat-label">Code Required</div>
+      <div class="stat-block">
+        <div class="stat-num s-rose">0</div>
+        <div class="stat-lbl">Code Needed</div>
       </div>
     </div>
     """)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    html('<div class="da-divider"></div>')
+    html('<div class="divider-line"></div>')
 
     # ── Capabilities ──
     html("""
-    <div class="sec">
-      <div class="sec-eye">Core Capabilities</div>
-      <div class="sec-title">What the Agent Does For You</div>
-      <div class="feat-grid">
-        <div class="feat-card">
-          <div class="feat-card-num">01</div>
-          <div class="feat-icon b">📊</div>
-          <div class="feat-title">Descriptive Statistics</div>
-          <div class="feat-desc">Automatically reads your dataset and computes shape, data types, missing values, distributions, and statistical summaries — without writing a single line of code.</div>
+    <div class="section">
+      <div class="sec-label">Core Capabilities</div>
+      <div class="sec-heading">What the Agent Does For You</div>
+      <div class="cap-grid">
+        <div class="cap-card">
+          <div class="cap-num">01</div>
+          <div class="cap-ico ico-g">📊</div>
+          <div class="cap-title">Descriptive Statistics</div>
+          <div class="cap-desc">Reads your dataset and automatically computes shape, data types, missing values, distributions, and summaries — without writing a single line of code.</div>
         </div>
-        <div class="feat-card">
-          <div class="feat-card-num">02</div>
-          <div class="feat-icon p">🤔</div>
-          <div class="feat-title">AI-Generated Questions</div>
-          <div class="feat-desc">Based on column metadata, the agent generates smart EDA questions — guiding the analysis the same way an experienced data scientist would approach a new dataset.</div>
+        <div class="cap-card">
+          <div class="cap-num">02</div>
+          <div class="cap-ico ico-t">🤔</div>
+          <div class="cap-title">AI-Generated Questions</div>
+          <div class="cap-desc">From column metadata alone, the agent generates smart EDA questions that guide analysis exactly the way a senior data scientist would approach a new dataset.</div>
         </div>
-        <div class="feat-card">
-          <div class="feat-card-num">03</div>
-          <div class="feat-icon g">📈</div>
-          <div class="feat-title">Automated Visualizations</div>
-          <div class="feat-desc">Generates contextual plots — histograms, scatter plots, correlation heatmaps, and trend charts — for each analytical question, surfacing hidden patterns visually.</div>
+        <div class="cap-card">
+          <div class="cap-num">03</div>
+          <div class="cap-ico ico-v">📈</div>
+          <div class="cap-title">Automated Visualizations</div>
+          <div class="cap-desc">Produces contextual plots — histograms, scatter plots, heatmaps, trend charts — for each analytical question, surfacing hidden patterns visually.</div>
         </div>
-        <div class="feat-card">
-          <div class="feat-card-num">04</div>
-          <div class="feat-icon o">📄</div>
-          <div class="feat-title">Business-Level Summary</div>
-          <div class="feat-desc">Produces plain-language summaries and actionable insights from your data — ready to share directly with stakeholders who don't work with data daily.</div>
+        <div class="cap-card">
+          <div class="cap-num">04</div>
+          <div class="cap-ico ico-r">📄</div>
+          <div class="cap-title">Business-Level Summary</div>
+          <div class="cap-desc">Delivers plain-language summaries and actionable insights ready to share directly with stakeholders who don't work with data daily.</div>
         </div>
       </div>
     </div>
     """)
 
-    html('<div class="da-divider"></div>')
+    html('<div class="divider-line"></div>')
 
     # ── Agent Crew ──
     html("""
-    <div class="sec" style="padding-bottom:28px;">
-      <div class="sec-eye">The Agent Crew</div>
-      <div class="sec-title">Three Agents, One Unified Workflow</div>
+    <div class="section tight-b">
+      <div class="sec-label">The Agent Crew</div>
+      <div class="sec-heading">Three Agents, One Unified Workflow</div>
     </div>
-    <div style="padding:0 48px 64px;max-width:1160px;margin:0 auto;">
-      <div class="crew-grid">
+    <div style="padding: 0 40px 60px; max-width: 1180px; margin: 0 auto;">
+      <div class="crew-row">
         <div class="crew-card">
-          <div class="crew-emoji">🔬</div>
+          <div class="crew-card-bar"></div>
+          <div class="crew-emo">🔬</div>
           <div class="crew-tag">EDA Crew</div>
           <div class="crew-name">Data Scientist Agent</div>
           <div class="crew-desc">Reads the raw CSV, computes descriptive statistics, detects data types, identifies missing values, and extracts structural metadata to lay the analysis foundation.</div>
         </div>
         <div class="crew-card">
-          <div class="crew-emoji">🧠</div>
+          <div class="crew-card-bar"></div>
+          <div class="crew-emo">🧠</div>
           <div class="crew-tag">Quest Crew</div>
           <div class="crew-name">Business Consultant Agent</div>
-          <div class="crew-desc">Analyzes dataset metadata to generate targeted, high-value analytical questions. Frames EDA in terms of business objectives and helps translate data into decisions.</div>
+          <div class="crew-desc">Analyzes dataset metadata to generate targeted, high-value questions. Frames EDA in terms of business objectives and translates patterns into decisions.</div>
         </div>
         <div class="crew-card">
-          <div class="crew-emoji">📉</div>
+          <div class="crew-card-bar"></div>
+          <div class="crew-emo">📉</div>
           <div class="crew-tag">Junior DA Crew</div>
           <div class="crew-name">Junior Data Analyst Agent</div>
-          <div class="crew-desc">Takes the generated questions and produces relevant plots and visual insights — identifying trends, outliers, correlations, and distributions across your dataset.</div>
+          <div class="crew-desc">Takes generated questions and produces relevant plots and visual insights — identifying trends, outliers, correlations, and distributions across your dataset.</div>
         </div>
       </div>
     </div>
     """)
 
-    html('<div class="da-divider"></div>')
+    html('<div class="divider-line"></div>')
 
     # ── How it works ──
     html("""
-    <div class="sec" style="padding-bottom:28px;">
-      <div class="sec-eye">How It Works</div>
-      <div class="sec-title sec-title-center">Four steps from raw data to ready insights</div>
+    <div class="section tight-b">
+      <div class="sec-label">How It Works</div>
+      <div class="sec-heading center">Four steps. Full EDA. Zero effort.</div>
     </div>
-    <div class="steps-wrap">
+    <div style="padding: 0 40px 64px; max-width: 1180px; margin: 0 auto;">
       <div class="steps-row">
         <div class="step">
-          <div class="step-circle">1</div>
+          <div class="step-n">01</div>
           <div class="step-title">Upload CSV</div>
           <div class="step-desc">Drop any structured dataset</div>
         </div>
         <div class="step">
-          <div class="step-circle">2</div>
+          <div class="step-n">02</div>
           <div class="step-title">Agents Activate</div>
           <div class="step-desc">EDA, Quest & DA crews run in sequence</div>
         </div>
         <div class="step">
-          <div class="step-circle">3</div>
+          <div class="step-n">03</div>
           <div class="step-title">Insights Surface</div>
-          <div class="step-desc">Stats, questions & charts auto-generated</div>
+          <div class="step-desc">Stats, questions & charts generated</div>
         </div>
         <div class="step">
-          <div class="step-circle">4</div>
+          <div class="step-n">04</div>
           <div class="step-title">Export Report</div>
           <div class="step-desc">Download full AI report as .txt</div>
         </div>
@@ -735,129 +846,76 @@ def page_landing():
     </div>
     """)
 
-    html('<div class="da-divider"></div>')
+    html('<div class="divider-line"></div>')
 
     # ── Tech stack ──
     html("""
-    <div class="sec" style="padding-bottom:28px;text-align:center;">
-      <div class="sec-eye">Built With</div>
-      <div class="sec-title sec-title-center">Open-source technologies under the hood</div>
+    <div class="section tight-b" style="text-align:center;">
+      <div class="sec-label" style="text-align:center;">Built With</div>
+      <div class="sec-heading center">Open-source technologies under the hood</div>
     </div>
-    """)
-    html("""
-    <div class="badges">
-      <span class="badge">🤖 CrewAI</span>
-      <span class="badge">🦜 LangChain</span>
-      <span class="badge">🐍 Python</span>
-      <span class="badge">🎈 Streamlit</span>
-      <span class="badge">🐼 Pandas</span>
-      <span class="badge">📊 Matplotlib</span>
-      <span class="badge">🔥 Seaborn</span>
-      <span class="badge">🧩 GPT-4 / LLM</span>
+    <div style="padding: 0 40px 64px;">
+      <div class="badge-row">
+        <span class="tech-badge">🤖 CrewAI</span>
+        <span class="tech-badge">🦜 LangChain</span>
+        <span class="tech-badge">🐍 Python</span>
+        <span class="tech-badge">🎈 Streamlit</span>
+        <span class="tech-badge">🐼 Pandas</span>
+        <span class="tech-badge">📊 Matplotlib</span>
+        <span class="tech-badge">🔥 Seaborn</span>
+        <span class="tech-badge">🧩 GPT-4 / LLM</span>
+      </div>
     </div>
     """)
 
     # ── Footer ──
     html("""
-    <div class="da-footer">
-      <div class="da-logo" style="font-size:14px;">
-        <div class="da-logo-box" style="width:26px;height:26px;font-size:13px;">📊</div>
+    <div class="pg-footer">
+      <div class="pg-footer-brand">
+        <div class="pg-footer-logo">📊</div>
         Data Analyst AI Agent
       </div>
-      <span class="foot-text">Built with CrewAI · Multi-Agent Automated EDA</span>
-      <span class="foot-text">© 2026 · Open Source</span>
+      <span class="pg-footer-txt">Built with CrewAI · Multi-Agent Automated EDA</span>
+      <span class="pg-footer-txt">© 2026 · Open Source</span>
     </div>
     """)
 
 
 # ══════════════════════════════════════════════════════════════
-#  LOGIN PAGE
-# ══════════════════════════════════════════════════════════════
-def page_login():
-    inject()
-
-    html("""
-    <div class="da-nav">
-      <div class="da-logo">
-        <div class="da-logo-box">📊</div>
-        Data Analyst AI Agent
-      </div>
-    </div>
-    """)
-
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-
-    _, col, _ = st.columns([1.6, 2, 1.6])
-    with col:
-        html("""
-        <div class="login-card">
-          <div class="login-emoji">🔐</div>
-          <div class="login-title">Welcome back</div>
-          <div class="login-sub">Sign in to access the Data Analyst AI Agent and start exploring your datasets with AI.</div>
-        """)
-
-        username = st.text_input("USERNAME", placeholder="Enter your username", key="u")
-        password = st.text_input("PASSWORD", type="password", placeholder="Enter your password", key="p")
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        html('<div class="submit-btn">')
-        clicked = st.button("Sign In  →", key="login_btn")
-        html('</div>')
-
-        if clicked:
-            if username == DEMO_USER and hash_password(password) == DEMO_PASS:
-                st.session_state.authenticated = True
-                st.session_state.page = "dashboard"
-                st.rerun()
-            else:
-                st.error("Invalid credentials. Please try again.")
-
-        html('<div class="login-hint">Demo: <b>admin</b> / <b>1234</b></div>')
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        html('<div class="back-btn">')
-        if st.button("← Back to Home", key="back"):
-            st.session_state.page = "landing"
-            st.rerun()
-        html('</div></div>')
-
-
-# ══════════════════════════════════════════════════════════════
-#  DASHBOARD
+#  DASHBOARD — direct access, no login required
 # ══════════════════════════════════════════════════════════════
 def page_dashboard():
     inject()
 
-    # ── Navbar ──
-    nav_l, nav_r = st.columns([5, 1])
-    with nav_l:
+    # ── Top bar ──
+    tl, tr = st.columns([5, 1])
+    with tl:
         html("""
-        <div class="dash-nav">
-          <div>
-            <div class="dash-title">
-              <span>📊</span> Data Analyst AI Agent
-              <div class="da-live-dot"></div>
-            </div>
-            <div class="dash-sub">Multi-Agent EDA Platform · CrewAI</div>
+        <div class="topbar">
+          <div class="topbar-brand">
+            <div class="topbar-logo">📊</div>
+            Data Analyst AI Agent
+            <div class="topbar-dot"></div>
           </div>
+          <span class="topbar-pill" style="display:none"></span>
         </div>
         """)
-    with nav_r:
-        html('<div class="dash-nav" style="justify-content:flex-end;padding-right:22px;">')
-        html('<div class="logout-btn">')
-        if st.button("⎋  Logout", key="logout"):
-            st.session_state.authenticated = False
+    with tr:
+        html('<div class="topbar" style="justify-content:flex-end;padding-right:16px;">')
+        html('<div class="home-btn">')
+        if st.button("← Home", key="go_home"):
             st.session_state.page = "landing"
             st.rerun()
         html('</div></div>')
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    _, main, _ = st.columns([0.4, 11.2, 0.4])
-    with main:
+    # ── Body ──
+    _, body, _ = st.columns([0.3, 11.4, 0.3])
+    with body:
 
-        # ── Upload ──
-        html('<div class="dash-sec">📂 Upload Dataset</div>')
+        # Upload
+        html('<div class="d-sec">📂  Upload Dataset</div>')
         uploaded_file = st.file_uploader(
             "Drag & drop a CSV file here, or click to browse",
             type=["csv"],
@@ -865,83 +923,83 @@ def page_dashboard():
         )
 
         if uploaded_file is not None:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp_file:
-                tmp_file.write(uploaded_file.read())
-                temp_path = tmp_file.name
+            # Save to temp file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
+                tmp.write(uploaded_file.read())
+                temp_path = tmp.name
 
-            df = pd.read_csv(temp_path)
-            numeric_cols = df.select_dtypes(include=["int64", "float64"]).columns
+            df       = pd.read_csv(temp_path)
+            num_cols = df.select_dtypes(include=["int64","float64"]).columns
             null_pct = round(
                 df.isnull().sum().sum() / (df.shape[0] * df.shape[1]) * 100, 1
             )
 
-            # ── Metrics ──
+            # ── Dataset Overview ──
             st.markdown("<br>", unsafe_allow_html=True)
-            html('<div class="dash-sec">📊 Dataset Overview</div>')
-            m1, m2, m3, m4 = st.columns(4)
-            with m1: st.metric("Total Rows",      f"{df.shape[0]:,}")
-            with m2: st.metric("Total Columns",   df.shape[1])
-            with m3: st.metric("Numeric Columns", len(numeric_cols))
-            with m4: st.metric("Missing Data",    f"{null_pct}%")
+            html('<div class="d-sec">📊  Dataset Overview</div>')
+            c1, c2, c3, c4 = st.columns(4)
+            with c1: st.metric("Total Rows",      f"{df.shape[0]:,}")
+            with c2: st.metric("Total Columns",   df.shape[1])
+            with c3: st.metric("Numeric Columns", len(num_cols))
+            with c4: st.metric("Missing Data",    f"{null_pct}%")
 
-            # ── Preview — direct dataframe, no extra wrapper divs ──
+            # ── Data Preview ──
             st.markdown("<br>", unsafe_allow_html=True)
-            html('<div class="dash-sec">🔍 Data Preview</div>')
+            html('<div class="d-sec">🔍  Data Preview</div>')
             st.dataframe(df.head(10), use_container_width=True)
 
             # ── AI Analysis ──
             st.markdown("<br>", unsafe_allow_html=True)
-            html('<div class="dash-sec">🤖 AI Agent Analysis</div>')
+            html('<div class="d-sec">🤖  AI Agent Analysis</div>')
 
-            with st.spinner("🧠 AI Agents are analyzing your dataset — this may take a moment..."):
+            with st.spinner("🧠  AI Agents analyzing your dataset — please wait..."):
                 output = run_pipeline(temp_path)
 
             # Summary
             st.markdown("<br>", unsafe_allow_html=True)
-            html('<div class="res-label" style="padding:0 0 10px;">📋 Summary</div>')
-            html('<div class="res-card">')
+            html('<div class="r-card"><div class="r-lbl">📋 &nbsp;Summary</div>')
             st.markdown(output["summary"])
             html('</div>')
 
+            # Key Questions + Visualization Suggestions
             st.markdown("<br>", unsafe_allow_html=True)
-
-            # Key Questions + Visualization Suggestions side by side
-            q_col, v_col = st.columns(2)
-            with q_col:
-                html('<div class="res-label" style="padding:0 0 10px;">❓ Key Questions</div>')
-                html('<div class="res-card">')
+            col_q, col_v = st.columns(2)
+            with col_q:
+                html('<div class="r-card" style="height:100%">')
+                html('<div class="r-lbl">❓ &nbsp;Key Questions</div>')
                 st.markdown(output["questions"])
                 html('</div>')
-            with v_col:
-                html('<div class="res-label" style="padding:0 0 10px;">📈 Visualization Suggestions</div>')
-                html('<div class="res-card">')
+            with col_v:
+                html('<div class="r-card" style="height:100%">')
+                html('<div class="r-lbl">📈 &nbsp;Visualization Suggestions</div>')
                 st.markdown(output["visuals"])
                 html('</div>')
 
-            # ── Generated Plots — each in its own column block, no deprecated param ──
+            # ── Generated Plots ──
             if output.get("plots"):
                 st.markdown("<br>", unsafe_allow_html=True)
-                html('<div class="dash-sec">📊 Generated Plots</div>')
+                html('<div class="d-sec">📊  Generated Plots</div>')
                 for plot_path in output["plots"]:
-                    p_l, p_m, p_r = st.columns([0.5, 9, 0.5])
-                    with p_m:
+                    _, pm, _ = st.columns([0.5, 9, 0.5])
+                    with pm:
                         st.image(plot_path, width=820)
+                    st.markdown("<br>", unsafe_allow_html=True)
 
-            # ── Heatmap ──
+            # ── Correlation Heatmap ──
             st.markdown("<br>", unsafe_allow_html=True)
-            html('<div class="dash-sec">🔥 Correlation Heatmap</div>')
+            html('<div class="d-sec">🔥  Correlation Heatmap</div>')
             heatmap_fig = plot_correlation_heatmap(df)
             if heatmap_fig:
-                heatmap_fig.set_size_inches(10, 6)
-                h_l, h_m, h_r = st.columns([0.5, 9, 0.5])
-                with h_m:
+                heatmap_fig.set_size_inches(10, 5)
+                _, hm, _ = st.columns([0.5, 9, 0.5])
+                with hm:
                     st.pyplot(heatmap_fig)
             else:
-                html('<div class="res-card"><p style="color:var(--text3);font-size:14px;">Not enough numeric columns to compute correlations.</p></div>')
+                html('<div class="r-card"><p style="color:var(--t3);font-size:13px;font-family:var(--ff-body);margin:0;">Not enough numeric columns to compute correlations.</p></div>')
 
             # ── Download ──
             st.markdown("<br>", unsafe_allow_html=True)
-            html('<div class="dl-btn">')
+            html('<div class="dl-wrap">')
             st.download_button(
                 label="⬇  Download AI Report (.txt)",
                 data=(
@@ -958,13 +1016,12 @@ def page_dashboard():
 
         else:
             html("""
-            <div class="empty-state">
-              <div class="empty-icon">📂</div>
-              <div class="empty-title">No dataset uploaded yet</div>
-              <div class="empty-sub">
-                Upload a CSV file above. The EDA Agent, Quest Agent, and
-                Junior DA Agent will immediately begin analyzing your data
-                and generating insights automatically.
+            <div class="empty-box">
+              <div class="e-icon">📂</div>
+              <div class="e-title">No dataset uploaded yet</div>
+              <div class="e-sub">
+                Upload a CSV above. The EDA Agent, Quest Agent, and Junior DA Agent
+                will immediately begin analyzing your data and generating insights automatically.
               </div>
             </div>
             """)
@@ -972,29 +1029,21 @@ def page_dashboard():
     # ── Footer ──
     st.markdown("<br><br>", unsafe_allow_html=True)
     html("""
-    <div class="da-footer">
-      <div class="da-logo" style="font-size:14px;">
-        <div class="da-logo-box" style="width:26px;height:26px;font-size:13px;">📊</div>
+    <div class="pg-footer">
+      <div class="pg-footer-brand">
+        <div class="pg-footer-logo">📊</div>
         Data Analyst AI Agent
       </div>
-      <span class="foot-text">Multi-Agent EDA · Powered by CrewAI</span>
-      <span class="foot-text">© 2026 · Open Source</span>
+      <span class="pg-footer-txt">Multi-Agent EDA · CrewAI</span>
+      <span class="pg-footer-txt">© 2026 · Open Source</span>
     </div>
     """)
 
 
 # ══════════════════════════════════════════════════════════════
-#  ROUTER
+#  ROUTER — no login, direct access
 # ══════════════════════════════════════════════════════════════
 if st.session_state.page == "landing":
     page_landing()
-
-elif st.session_state.page == "login":
-    page_login()
-
-elif st.session_state.page == "dashboard":
-    if st.session_state.authenticated:
-        page_dashboard()
-    else:
-        st.session_state.page = "login"
-        st.rerun()
+else:
+    page_dashboard()
