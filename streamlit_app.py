@@ -704,6 +704,8 @@ def page_landing():
         compute statistics, generate analytical questions, create visualizations,
         and produce business-ready summaries — end to end.
       </p>
+     <p>(NOTE :- This demo works best with datasets under 1000 rows for optimal performance and responsiveness.)
+    </p>
     </div>
     """)
 
